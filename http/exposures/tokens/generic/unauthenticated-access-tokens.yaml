@@ -1,0 +1,44 @@
+id: unauthenticated-access-tokens-disclosure
+
+info:
+  name: Unauthenticated Access Tokens Disclosure
+  author: xtawb
+  severity: high
+  description: |
+    The endpoint '/_api/v1/access-tokens' is publicly accessible and discloses sensitive data including JWTs and OAuth tokens without authentication.
+  reference:
+    - https://owasp.org/API-Security/editions/2019/en/0xa3-excessive-data-exposure/
+  tags: exposure,jwt,token,api,leak,information-disclosure
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}/_api/v1/access-tokens"
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - "accessToken"
+          - "mediaAuthToken"
+          - "visitorId"
+        condition: or
+
+      - type: regex
+        regex:
+          - "(eyJ[a-zA-Z0-9_-]{10,})"   # JWT pattern
+          - "(OauthNG\\.JWS\\.[a-zA-Z0-9_-]{10,})"  # OAuth token pattern
+
+    extractors:
+      - type: regex
+        name: jwt_token
+        regex:
+          - "(eyJ[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_-]{10,})"
+      - type: regex
+        name: oauth_token
+        regex:
+          - "(OauthNG\\.JWS\\.[a-zA-Z0-9_-]{10,})"
